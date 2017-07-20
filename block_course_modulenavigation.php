@@ -81,9 +81,13 @@ class block_course_modulenavigation extends block_base {
         $selected = optional_param('section', null, PARAM_INT);
         $intab = optional_param('dtab', null, PARAM_TEXT);
 
+
+        
         $this->content = new stdClass();
         $this->content->footer = '';
         $this->content->text   = '';
+
+
 
         if (empty($this->instance)) {
             return $this->content;
@@ -100,6 +104,10 @@ class block_course_modulenavigation extends block_base {
         }
 
         if ($format instanceof format_dynamictabs) {
+            // Dont show the menu in a tab
+            if ($intab) {
+                return $this->content;
+            }
             $sections = $format->tabs_get_sections();
         } else {
             $sections = $format->get_sections();
@@ -111,9 +119,6 @@ class block_course_modulenavigation extends block_base {
 
         $context = context_course::instance($course->id);
 
-        if ($format instanceof format_dynamictabs) {
-            $course = $format->get_course();
-        }
         $modinfo = get_fast_modinfo($course);
 
         $template = new stdClass();
@@ -141,6 +146,25 @@ class block_course_modulenavigation extends block_base {
             }
         }
 
+        if ($format instanceof format_dynamictabs) {
+            $coursesections = $DB->get_records('course_sections', array('course' => $course->id));
+            $mysection = 0;
+            foreach ($coursesections as $cs) {
+                $csmodules = explode(',', $cs->sequence);
+                if (in_array($myactivityid, $csmodules)) {
+                    $mysection = $cs->id;
+                }
+            }
+            if ($mysection) {
+                if ($DB->get_records('format_dynamictabs_tabs', array('courseid' => $course->id, 
+                    'sectionid' => $mysection))) {
+                    // This is a module inside a tab of the Dynamic tabs course format.
+                    // Prevent showing of this menu
+                    return $this->content;
+                }
+            }
+        }
+
         $template->inactivity = $inactivity;
 
         if (count($sections) > 1) {
@@ -156,7 +180,6 @@ class block_course_modulenavigation extends block_base {
             $sectionnums[] = $section->section;
         }
         $template->arrowpixurl = $OUTPUT->pix_url('arrow-down', 'block_course_modulenavigation');
-
         foreach ($sections as $section) {
             $i = $section->section;
             if ($i > $course->numsections) {
@@ -249,6 +272,7 @@ class block_course_modulenavigation extends block_base {
         if ($intab) {
             $template->inactivity = true;
         }
+
         $template->coursename = $course->fullname;
         $template->config = $this->config;
         $renderer = $this->page->get_renderer('block_course_modulenavigation', 'nav');
