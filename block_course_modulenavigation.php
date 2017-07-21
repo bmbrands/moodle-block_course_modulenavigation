@@ -103,7 +103,7 @@ class block_course_modulenavigation extends block_base {
         }
 
         if ($format instanceof format_dynamictabs) {
-            // Dont show the menu in a tab
+            // Dont show the menu in a tab.
             if ($intab) {
                 return $this->content;
             }
@@ -156,10 +156,10 @@ class block_course_modulenavigation extends block_base {
                 }
             }
             if ($mysection) {
-                if ($DB->get_records('format_dynamictabs_tabs', array('courseid' => $course->id, 
+                if ($DB->get_records('format_dynamictabs_tabs', array('courseid' => $course->id,
                     'sectionid' => $mysection))) {
                     // This is a module inside a tab of the Dynamic tabs course format.
-                    // Prevent showing of this menu
+                    // Prevent showing of this menu.
                     return $this->content;
                 }
             }
